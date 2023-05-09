@@ -37,4 +37,4 @@ The output can be plotted using the plot() method, which shows the original time
 * It may produce false positives if the data has a high level of noise or if there are sudden changes in the data that are not anomalies.
 * It may not be suitable for data that has a large number of missing values or outliers, good preprocessing could help here.
 
-![alt text](images/interactive_plot.png)
+![Interactive Plot](images/interactive_plt.png)
