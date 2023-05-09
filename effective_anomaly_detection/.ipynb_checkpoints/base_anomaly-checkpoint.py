@@ -1,11 +1,18 @@
+from dataclasses import dataclass
 from typing import List, Tuple, Dict
 import numpy as np
 
+@dataclass
+class AnomalyDetectorConfig:
+    lag: int
+    threshold: float
+    influence: float
+
 class AnomalyDetector:
-    def __init__(self, lag: int, threshold: float, influence: float):
-        self.lag = lag
-        self.threshold = threshold
-        self.influence = influence
+    def __init__(self, config: AnomalyDetectorConfig):
+        self.lag = config.lag
+        self.threshold = config.threshold
+        self.influence = config.influence
 
     @staticmethod
     def moving_average_std(data: List[float], window_size: int) -> Tuple[float, float]:
@@ -23,3 +30,9 @@ class AnomalyDetector:
     @staticmethod
     def create_arrays(y: List[float]) -> Tuple[np.ndarray, List[float], List[float]]:
         return np.zeros(len(y)), [0] * len(y), [0] * len(y)
+    
+    @staticmethod
+    def is_outlier(data: float, avg: float, std: float, threshold: float) -> bool:
+        return abs(data - avg) > threshold * std
+    
+
