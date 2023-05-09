@@ -13,7 +13,7 @@ Here's a step-by-step explanation of how the algorithm works:
 * For each data point in the time series, calculate whether it is outside the upper or lower bounds.
 * If a data point is outside the bounds, mark it as an anomaly by assigning it a value of +1 or -1 (depending on whether it is above or below the upper or lower bound, respectively).
 * If a data point is not outside the bounds, it is considered normal and assigned a value of 0.
-* Optionally, smooth the time series by replacing anomalous values with a weighted average of the previous value and the current value, where the weight is specified by the influence parameter.
+* Optionally, smooth the time series by replacing anomalous values with a weighted average of the previous value and the current value, where the weight is specified by the influence parameter. In other words, influence is a parameter that determines how much an anomaly affects the subsequent moving average and standard deviation calculations.
 * Repeat steps 1-6 for the rest of the time series.
 
 The algorithm outputs a dictionary containing the signals (an array of +1, -1, or 0 indicating whether each data point is anomalous or not), the moving average, and the standard deviation.
