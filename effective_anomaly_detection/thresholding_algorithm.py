@@ -10,19 +10,6 @@ class ThresholdingAnomalyDetector(AnomalyDetector):
     """
     def __init__(self, config: AnomalyDetectorConfig):
         super().__init__(config)
-    
-    def distribution(self, y: List[float]) -> None:
-        fig, ax = plt.subplots(dpi=100, figsize=(8, 3))
-        
-        ax.hist(y, bins=30, color='steelblue', edgecolor='k', alpha=0.7)
-        ax.set_xlabel('Value', fontfamily="monospace")
-        ax.set_ylabel('Frequency', fontfamily="monospace")
-        ax.grid(True, which='major', c='gray', ls='-', lw=0.5, alpha=0.1)
-        ax.tick_params(axis=u'both', which=u'both', length=0)
-        for s in ["bottom", "top", "left", "right"]:
-            ax.spines[s].set_visible(False)
-        
-        return None
 
     def initialize_filters(self, y: List[float]) -> Tuple[np.ndarray, List[float], List[float]]:
         signals, avg_filter, std_filter = self.create_arrays(y)
