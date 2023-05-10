@@ -3,3 +3,4 @@ from .base_anomaly import AnomalyDetector, AnomalyDetectorConfig
 from .real_time_anomaly import RealTimeAnomalyDetector
 from .thresholding_algorithm import ThresholdingAnomalyDetector
 from .exponential_thresholding import EMAAnomalyDetector
+from .arima_anomaly_detector import ARIMAAnomalyDetector

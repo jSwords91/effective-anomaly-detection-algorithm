@@ -43,10 +43,10 @@ class AnomalyDetector(ABC):
     def convert_signals_to_ints(signals: List[float]) -> List[int]:
          return [int(signal) for signal in signals]
 
-    def plot(self, y: List[float], results: Dict[str, np.ndarray], xlabel: str = 'Time', ylabel: str = 'Value', ylabel2: str = 'Signal', figsize: Tuple[int, int] = (12, 8)) -> plt.figure:
+    def plot(self, y: List[float], results: Dict[str, np.ndarray], xlabel: str = 'Time', ylabel: str = 'Value', figsize: Tuple[int, int] = (12, 8)) -> plt.figure:
         fig = plt.figure(figsize=figsize, dpi=150)
         gs = gridspec.GridSpec(3, 1, height_ratios=[2, 0.5, 1])
-        gs.update(wspace=1.5, hspace=0.1)
+        gs.update(wspace=1.5, hspace=0.025)
         ax1 = plt.subplot(gs[0])
         ax2 = plt.subplot(gs[1], sharex=ax1)
         axes = [ax1, ax2]
@@ -64,12 +64,19 @@ class AnomalyDetector(ABC):
             lower_bound = np.concatenate(lower_bound).ravel()
         except ValueError:
             pass
-
+        
+        min_pos, max_pos = min(y.min(), lower_bound.min()), max(y.max(), upper_bound.max())
+        
+     
         ax1.plot(time_series, y, 'k.', label='Original Data', alpha=0.7)
         ax1.plot(time_series, avg_filter, ls='-', lw=2, c='steelblue', label='Moving Average')
         ax1.fill_between(time_series, lower_bound, upper_bound, color='lightsteelblue', alpha=0.3, label='Bounds')
         ax1.scatter(time_series[signals == 1], y[signals == 1], color='coral', s=20, zorder=5)
         ax1.scatter(time_series[signals == -1], y[signals == -1], color='coral', marker='o', s=20, zorder=5)
+        
+        for polarity in [1, -1]:
+            ax1.vlines(time_series[signals == polarity], min_pos, max_pos, color="coral", alpha=0.2)
+        
         ax2.plot(time_series, signals, ls='-', c='coral', label='Signals')
 
         for ax in axes:
@@ -80,12 +87,14 @@ class AnomalyDetector(ABC):
 
         ax2.set_xlabel(xlabel, fontfamily="monospace")
         ax1.set_ylabel(ylabel, fontfamily="monospace")
-        ax2.set_ylabel(ylabel2, fontfamily="monospace")
+        ax2.set_ylabel("Signal", fontfamily="monospace")
 
         ax1.set_xlim(time_series[0], time_series[-1])
-        ax1.set_ylim(lower_bound.min(), upper_bound.max())
+        ax1.set_ylim(min_pos, max_pos)
         ax2.set_xlim(time_series[0], time_series[-1])
         ax1.set_xticklabels([])
+        plt.setp(ax2.get_yticklabels(), visible=False)
+
         return fig
     
 
