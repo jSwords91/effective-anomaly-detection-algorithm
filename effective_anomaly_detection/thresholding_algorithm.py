@@ -1,75 +1,54 @@
 from typing import List, Tuple, Dict
 import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.gridspec as gridspec
 
 from .base_anomaly import AnomalyDetector, AnomalyDetectorConfig
-
-
-class ThresholdingAnomalyDetector(AnomalyDetector):
     
+    
+class ThresholdingAnomalyDetector(AnomalyDetector):
     """
     Anomaly detector based on thresholding technique using moving average and standard deviation filter.
     """
-        
     def __init__(self, config: AnomalyDetectorConfig):
         super().__init__(config)
+    
+    def distribution(self, y: List[float]) -> None:
+        fig, ax = plt.subplots(dpi=100, figsize=(8, 3))
+        
+        ax.hist(y, bins=30, color='steelblue', edgecolor='k', alpha=0.7)
+        ax.set_xlabel('Value', fontfamily="monospace")
+        ax.set_ylabel('Frequency', fontfamily="monospace")
+        ax.grid(True, which='major', c='gray', ls='-', lw=0.5, alpha=0.1)
+        ax.tick_params(axis=u'both', which=u'both', length=0)
+        for s in ["bottom", "top", "left", "right"]:
+            ax.spines[s].set_visible(False)
+        
+        return None
+
+    def initialize_filters(self, y: List[float]) -> Tuple[np.ndarray, List[float], List[float]]:
+        signals, avg_filter, std_filter = self.create_arrays(y)
+        avg_filter[self.lag - 1], std_filter[self.lag - 1] = self.moving_average_std(y[:self.lag], self.lag)
+        return signals, avg_filter, std_filter
+
+    def update_signal_and_filtered_series(self, data: float, i: int, avg_filter: List[float], std_filter: List[float], signals: np.ndarray, filtered_y: np.ndarray):
+        is_outlier = self.is_outlier(data, avg_filter[i - 1], std_filter[i - 1], self.threshold)
+        signals[i] = np.sign(data - avg_filter[i - 1]) * is_outlier
+        filtered_y[i] = self.update_filtered_series(data, self.influence, filtered_y[i - 1]) if is_outlier else data
+        return signals, filtered_y
 
     def run(self, y: List[float]) -> Dict[str, np.ndarray]:
         y = np.asarray(y)
-        signals, avg_filter, std_filter = self.create_arrays(y)
         filtered_y = np.array(y)
-        avg_filter[self.lag - 1], std_filter[self.lag - 1] = self.moving_average_std(y[:self.lag], self.lag)
+        signals, avg_filter, std_filter = self.initialize_filters(y)
 
         for i, data in enumerate(y[self.lag:], start=self.lag):
-            is_outlier = abs(data - avg_filter[i - 1]) > self.threshold * std_filter[i - 1]
-            signals[i] = np.sign(data - avg_filter[i - 1]) * is_outlier
-
-            filtered_y[i] = self.update_filtered_series(data, self.influence, filtered_y[i - 1]) if is_outlier else data
+            signals, filtered_y = self.update_signal_and_filtered_series(data, i, avg_filter, std_filter, signals, filtered_y)
             avg_filter, std_filter = self.update_avg_std(filtered_y, avg_filter, std_filter, i, self.lag)
             
-        return dict(signals=np.asarray(signals),
+        return self.prepare_output(signals, avg_filter, std_filter)
+
+    def prepare_output(self, signals: List[float], avg_filter: List[float], std_filter: List[float]):
+        return dict(signals=np.asarray(AnomalyDetector.convert_signals_to_ints(signals)),
                     avgFilter=np.asarray(avg_filter),
                     stdFilter=np.asarray(std_filter))
     
     
-    def plot(self, y: List[float], results: Dict[str, np.ndarray], xlabel: str = 'Time', ylabel: str = 'Value', ylabel2: str = 'Signal', figsize: Tuple[int, int] = (12, 8)) -> plt.figure:
-
-        fig = plt.figure(figsize=figsize, dpi=150)
-        gs = gridspec.GridSpec(3, 1, height_ratios=[2, 0.5, 1])
-        gs.update(wspace=1.5, hspace=0.1)
-        ax1 = plt.subplot(gs[0])
-        ax2 = plt.subplot(gs[1], sharex=ax1)
-        axes = [ax1, ax2]
-
-        signals = results["signals"][self.lag:]
-        avg_filter = results["avgFilter"][self.lag:]
-        std_filter = results["stdFilter"][self.lag:]
-        time_series = np.arange(len(y))[self.lag:]
-        y = y[self.lag:]
-        upper_bound = (avg_filter + self.threshold * std_filter)
-        lower_bound = (avg_filter - self.threshold * std_filter)
-
-        ax1.plot(time_series, y, 'k.', label='Original Data', alpha=0.7)
-        ax1.plot(time_series, avg_filter, ls='-', lw=2, c='steelblue', label='Moving Average')
-        ax1.fill_between(time_series, lower_bound, upper_bound, color='lightsteelblue', alpha=0.3, label='Bounds')
-        ax1.scatter(time_series[signals == 1], y[signals == 1], color='coral', s=20, zorder=5)
-        ax1.scatter(time_series[signals == -1], y[signals == -1], color='coral', marker='o', s=20, zorder=5)
-        ax2.plot(time_series, signals, ls='-', c='coral', label='Signals')
-
-        for ax in axes:
-            ax.grid(True, which='major', c='gray', ls='-', lw=0.5, alpha=0.1)
-            ax.tick_params(axis=u'both', which=u'both', length=0)
-            for s in ["bottom", "top", "left", "right"]:
-                ax.spines[s].set_visible(False)
-
-        ax2.set_xlabel(xlabel, fontfamily="monospace")
-        ax1.set_ylabel(ylabel, fontfamily="monospace")
-        ax2.set_ylabel(ylabel2, fontfamily="monospace")
-
-        ax1.set_xlim(time_series[0], time_series[-1])
-        ax1.set_ylim(lower_bound.min(), upper_bound.max())
-        ax2.set_xlim(time_series[0], time_series[-1])
-        ax1.set_xticklabels([])
-
-        return fig

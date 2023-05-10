@@ -20,6 +20,26 @@ The algorithm outputs a dictionary containing the signals (an array of +1, -1, o
 
 The output can be plotted using the plot() method, which shows the original time series data along with the moving average, upper and lower bounds, and markers for anomalous data points.
 
+
+## **Algorithms**
+
+Currently there are **three** flavours implemented here:
+
+ * **ThresholdingAnomalyDetector**: This is the standard algorithm described above
+ 
+ * **EMAAnomalyDetector**: This has an additional paramater, `alpha`, which determines the degree of weighting for recent data points compared to older data points. More detail later on.
+ 
+ * **RealTimeAnomalyDetector**: This implementation uses only the data available at the time of detection, therefore produces different results that the algorithms above.
+ 
+ 
+## **Important Assumptions**
+ 
+* **Stationarity**: The data is assumed to be stationary, meaning that the statistical properties such as mean and standard deviation are constant over time. This is because the moving average and standard deviation are calculated over a sliding window and used to detect anomalies. If the underlying data is non-stationary, the algorithm may have trouble adapting to changes in the mean and standard deviation over time.
+
+* **Normality**: The algorithm implicitly assumes that the data follows a Gaussian or normal distribution. This is due to the usage of the standard deviation for establishing the threshold. In a normal distribution, about 68% of values lie within one standard deviation of the mean, 95% lie within two, and 99.7% lie within three. If the data is not normally distributed, this percentage can vary, which might affect the performance of the anomaly detection.
+
+* **Independence**: The data points are assumed to be independent of each other. The algorithm does not account for any potential correlation between different data points. If the data points are not independent, the presence of an anomaly could be correlated with the presence of other anomalies, which this algorithm would not detect.
+ 
 ## Advantages:
 
 * The algorithm is simple to implement and understand.
